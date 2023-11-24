@@ -18,7 +18,7 @@ export class UsersDTO {
     email: string;
 
     @IsOptional()
-    @IsPhoneNumber()
+    @IsString()
     @MaxLength(15)
     phoneNumber: string;
 }

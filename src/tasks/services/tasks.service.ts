@@ -3,12 +3,12 @@ import { TasksDTO } from '../dto/tasks.dto';
 import { TasksEntity } from '../entities/tasks.entity';
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { UsersService } from 'src/users/services/users.service';
-import { IUseToken } from 'src/auth/interfaces/auth.interface';
-import { useToken } from 'src/utils/use.token';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import * as jwt from 'jsonwebtoken';
+import { TASKS_STATUS } from 'src/constants/TASKS_STATUS';
+import { updateTaskStatusDTO } from '../dto/update-task-status.dto';
 
 @Injectable()
 export class TasksService {
@@ -77,5 +77,48 @@ export class TasksService {
         } catch(error) {
             console.log(error)
         }
+    }
+
+    public async getTaskById(taskId: string): Promise<TasksEntity> {
+        try {
+            const task = this.tasksRepository.findOneBy({
+                taskId
+            })
+            return task
+        } catch(error) {
+            throw new NotFoundException()
+        }
+        
+    }
+
+    public async updateTaskStatus(taskId: string, body: updateTaskStatusDTO): Promise<UpdateResult> {
+        try {
+            const task = await this.getTaskById(taskId)
+
+            if (!task) {
+                throw new BadRequestException();
+            }
+            
+            if (body.status !== task.status) {
+                throw new BadRequestException();
+            }
+
+            if (body.status === TASKS_STATUS.PENDING) {
+                task.status = TASKS_STATUS.DONE;
+            } else if (body.status === TASKS_STATUS.DONE){
+                task.status = TASKS_STATUS.PENDING;
+            }
+            const updatedTask: UpdateResult = await this.tasksRepository.update(
+                taskId, task
+            )
+
+            if (updatedTask.affected === 1) {
+                return updatedTask;
+            }
+            throw new BadRequestException();
+        } catch(error) {
+            throw new BadRequestException()
+        }
+
     }
 }
