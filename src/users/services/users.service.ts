@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsersDTO } from '../dto/users.dto';
 import { UsersEntity } from '../entities/users.entity';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import { UpdateUsersDTO } from '../dto/update-users.dto';
 
 @Injectable()
 export class UsersService {
@@ -62,4 +64,38 @@ export class UsersService {
             throw new BadRequestException();
         }
     }
+
+    public async updateUserByToken(request: Request, body: UpdateUsersDTO) {
+        try {
+            const token = request.headers['api_token']
+
+            if (typeof token !== 'string') throw Error;
+
+            const manageToken = jwt.decode(token);
+
+            // sub is the userId
+            const tokenUserId = manageToken.sub
+
+            if (typeof tokenUserId !== 'string') throw Error;
+
+            const user: Promise<UsersEntity> = this.getUserById(tokenUserId)
+
+            const {username, email, phoneNumber} = body;
+
+            const updatedUser = {username, email, phoneNumber};
+
+            const updateResult: UpdateResult = await this.usersRepository.update(
+                (await user).userId, updatedUser
+            )
+
+            if (updateResult.affected !== 0) {
+                return updatedUser;
+            }
+
+            throw new BadRequestException();
+            
+        } catch(error) {
+            throw new BadRequestException();
+        }
+    } 
 }
