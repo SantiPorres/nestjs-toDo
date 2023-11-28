@@ -3,10 +3,9 @@ import { TasksDTO } from '../dto/tasks.dto';
 import { TasksEntity } from '../entities/tasks.entity';
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { UsersService } from 'src/users/services/users.service';
 import { UsersEntity } from 'src/users/entities/users.entity';
-import * as jwt from 'jsonwebtoken';
 import { TASKS_STATUS } from 'src/constants/TASKS_STATUS';
 import { updateTaskStatusDTO } from '../dto/update-task-status.dto';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
@@ -40,9 +39,15 @@ export class TasksService {
             const task = this.tasksRepository.findOneBy({
                 taskId
             })
-            return task
+
+            if (task) {
+                return task
+            }
+
+            throw new NotFoundException();
+
         } catch(error) {
-            throw new NotFoundException()
+            throw new NotFoundException();
         }
         
     }
@@ -73,9 +78,28 @@ export class TasksService {
             }
             throw new BadRequestException();
         } catch(error) {
-            throw new BadRequestException()
+            throw new BadRequestException();
         }
 
+    }
+
+    public async deleteTaskById(taskId: string): Promise<DeleteResult> {
+        try {
+            const task: TasksEntity = await this.getTaskById(taskId);
+
+            const deleteResult: DeleteResult = await this.tasksRepository.delete(
+                task.taskId
+            )
+
+            if (deleteResult.affected !== 0) {
+                return deleteResult;
+            }
+
+            throw new BadRequestException();
+
+        } catch(error) {
+            throw new BadRequestException();
+        }
     }
 
 
@@ -105,7 +129,7 @@ export class TasksService {
         }
     }
 
-    public async createTask(body: TasksDTO, request: Request): Promise<TasksEntity> {
+    public async createTaskByUserToken(body: TasksDTO, request: Request): Promise<TasksEntity> {
 
         try {
 
