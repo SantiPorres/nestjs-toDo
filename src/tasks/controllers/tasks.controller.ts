@@ -28,7 +28,7 @@ export class TasksController {
 
     @Patch(':taskId')
     public async updateTaskStatus(@Param('taskId') taskId: string, @Body() body: updateTaskStatusDTO ) {
-        return await this.tasksServices.updateTaskStatus(taskId, body)
+        return await this.tasksServices.updateTaskStatusById(taskId, body)
     }
 
 }

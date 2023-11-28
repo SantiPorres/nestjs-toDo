@@ -4,8 +4,10 @@ import { UsersEntity } from '../entities/users.entity';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
 import { UpdateUsersDTO } from '../dto/update-users.dto';
+import { manageTokenFromHeaders } from 'src/utils/manage.token';
+import { Request } from 'express';
+import { IUseToken } from 'src/auth/interfaces/auth.interface';
 
 @Injectable()
 export class UsersService {
@@ -26,24 +28,7 @@ export class UsersService {
         }
     }
 
-    public async getUserById(userId: string): Promise<UsersEntity> {
-        try {
-            const user: UsersEntity = await this.usersRepository
-                .createQueryBuilder('user')
-                .where({ userId })
-                .leftJoinAndSelect('user.tasksIncludes', 'tasksIncludes')
-                .getOne();
-            
-            if (!user) {
-                throw new BadRequestException();
-            }
 
-            return user;
-
-        } catch(error) {
-            throw new NotFoundException();
-        }
-    }
 
     public async getUserBy({
         key, value
@@ -65,19 +50,57 @@ export class UsersService {
         }
     }
 
+
+
+    // Methods by Id
+
+    public async getUserById(userId: string): Promise<UsersEntity> {
+        try {
+            const user: UsersEntity = await this.usersRepository
+                .createQueryBuilder('user')
+                .where({ userId })
+                .leftJoinAndSelect('user.tasksIncludes', 'tasksIncludes')
+                .getOne();
+            
+            if (!user) {
+                throw new BadRequestException();
+            }
+
+            return user;
+
+        } catch(error) {
+            throw new NotFoundException();
+        }
+    }
+
+    public async deleteUserById(userId: string) {
+        try {
+            const deleteResult: DeleteResult = await this.usersRepository.delete(
+                userId
+            )
+
+            if (deleteResult.affected !== 0) {
+                return deleteResult;
+            }
+
+            throw new BadRequestException();
+        } catch(error) {
+            throw new BadRequestException();
+        }
+    }
+
+
+
+    // Methods by Token
+
     public async updateUserByToken(request: Request, body: UpdateUsersDTO) {
         try {
-            const token = request.headers['api_token']
 
-            if (typeof token !== 'string') throw Error;
+            const managedToken: IUseToken = manageTokenFromHeaders(request);
 
-            const manageToken = jwt.decode(token);
-
-            // sub is the userId
-            const tokenUserId = manageToken.sub
-
-            if (typeof tokenUserId !== 'string') throw Error;
-
+            // sub refers to Subject => userId
+            const tokenUserId = managedToken.sub;
+            
             const user: Promise<UsersEntity> = this.getUserById(tokenUserId)
 
             const {username, email, phoneNumber} = body;
@@ -99,34 +122,12 @@ export class UsersService {
         }
     }
 
-    public async deleteUserById(userId: string) {
-        try {
-            const deleteResult: DeleteResult = await this.usersRepository.delete(
-                userId
-            )
-
-            if (deleteResult.affected !== 0) {
-                return deleteResult;
-            }
-
-            throw new BadRequestException();
-        } catch(error) {
-            throw new BadRequestException();
-        }
-    }
-
     public async deleteUserByToken(request: Request) {
         try {
-            const token = request.headers['api_token']
+            const managedToken: IUseToken = manageTokenFromHeaders(request);
 
-            if (typeof token !== 'string') throw Error;
-
-            const manageToken = jwt.decode(token);
-
-            // sub is the userId
-            const tokenUserId = manageToken.sub
-
-            if (typeof tokenUserId !== 'string') throw Error;
+            // sub refers to the Subject => userId
+            const tokenUserId = managedToken.sub;
 
             const user: Promise<UsersEntity> = this.getUserById(tokenUserId)
 

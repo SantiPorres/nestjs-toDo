@@ -9,6 +9,8 @@ import { UsersEntity } from 'src/users/entities/users.entity';
 import * as jwt from 'jsonwebtoken';
 import { TASKS_STATUS } from 'src/constants/TASKS_STATUS';
 import { updateTaskStatusDTO } from '../dto/update-task-status.dto';
+import { IUseToken } from 'src/auth/interfaces/auth.interface';
+import { manageTokenFromHeaders } from 'src/utils/manage.token';
 
 @Injectable()
 export class TasksService {
@@ -18,29 +20,9 @@ export class TasksService {
         private readonly usersService: UsersService
     ) {}
 
-    public async createTask(body: TasksDTO, request: Request): Promise<TasksEntity> {
 
-        try {
 
-            const token = request.headers['api_token']
-
-            if (typeof token !== 'string') throw Error;
-
-            const manageToken = jwt.decode(token);
-            // sub is the userId
-            if (typeof manageToken.sub !== 'string') throw Error;
-            
-            const user = await this.usersService.getUserById(manageToken.sub);
-
-            return await this.tasksRepository.save({
-                ...body,
-                user
-            })
-
-        } catch(error) {
-            throw new BadRequestException();
-        }
-    }
+    // Methods by Id
 
     public async getAllTasksByUserId(userId: string): Promise<TasksEntity[]> {
         const user: UsersEntity = await this.usersService.getUserById(userId);
@@ -51,32 +33,6 @@ export class TasksService {
             })
 
         return tasks;
-    }
-
-    public async getAllTasksByUserToken(
-        request: Request
-    ) : Promise<TasksEntity[]> {
-        try {
-            
-            const token = request.headers['api_token']
-
-            if (typeof token !== 'string') throw Error;
-
-            const manageToken = jwt.decode(token);
-            // sub is the userId
-            if (typeof manageToken.sub !== 'string') throw Error;
-            
-            const tasks: TasksEntity[] = await this.getAllTasksByUserId(manageToken.sub)
-
-            if (tasks.length === 0) {
-                throw new NotFoundException()
-            }
-
-            return tasks;
-
-        } catch(error) {
-            console.log(error)
-        }
     }
 
     public async getTaskById(taskId: string): Promise<TasksEntity> {
@@ -91,7 +47,7 @@ export class TasksService {
         
     }
 
-    public async updateTaskStatus(taskId: string, body: updateTaskStatusDTO): Promise<UpdateResult> {
+    public async updateTaskStatusById(taskId: string, body: updateTaskStatusDTO): Promise<UpdateResult> {
         try {
             const task = await this.getTaskById(taskId)
 
@@ -120,5 +76,53 @@ export class TasksService {
             throw new BadRequestException()
         }
 
+    }
+
+
+
+    // Methods by Token
+
+    public async getAllTasksByUserToken(
+        request: Request
+    ) : Promise<TasksEntity[]> {
+        try {
+            
+            const managedToken: IUseToken = manageTokenFromHeaders(request);
+            
+            // sub refers to Subject => userId
+            const tokenUserId = managedToken.sub
+            
+            const tasks: TasksEntity[] = await this.getAllTasksByUserId(tokenUserId)
+
+            if (tasks.length === 0) {
+                throw new NotFoundException()
+            }
+
+            return tasks;
+
+        } catch(error) {
+            console.log(error)
+        }
+    }
+
+    public async createTask(body: TasksDTO, request: Request): Promise<TasksEntity> {
+
+        try {
+
+            const managedToken: IUseToken = manageTokenFromHeaders(request);
+            
+            // sub refers to Subject => userId
+            const tokenUserId = managedToken.sub
+
+            const user = await this.usersService.getUserById(tokenUserId);
+
+            return await this.tasksRepository.save({
+                ...body,
+                user
+            })
+
+        } catch(error) {
+            throw new BadRequestException();
+        }
     }
 }
