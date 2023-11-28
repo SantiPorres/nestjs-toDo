@@ -1,9 +1,8 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { TasksService } from '../services/tasks.service';
 import { TasksDTO } from '../dto/tasks.dto';
 import { Request } from 'express';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
-import { TASKS_STATUS } from 'src/constants/TASKS_STATUS';
 import { updateTaskStatusDTO } from '../dto/update-task-status.dto';
 
 @Controller('tasks')
@@ -18,7 +17,7 @@ export class TasksController {
         @Body() body: TasksDTO,
         @Req() request: Request
     ) {
-        return await this.tasksServices.createTask(body, request);
+        return await this.tasksServices.createTaskByUserToken(body, request);
     }
 
     @Get()
@@ -29,6 +28,11 @@ export class TasksController {
     @Patch(':taskId')
     public async updateTaskStatus(@Param('taskId') taskId: string, @Body() body: updateTaskStatusDTO ) {
         return await this.tasksServices.updateTaskStatusById(taskId, body)
+    }
+
+    @Delete(':taskId')
+    public async deleteTask(@Param('taskId') taskId: string) {
+        return await this.tasksServices.deleteTaskById(taskId);
     }
 
 }
