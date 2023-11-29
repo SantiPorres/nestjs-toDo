@@ -1,4 +1,4 @@
-import { BadRequestException, ExecutionContext, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { TasksDTO } from '../dto/tasks.dto';
 import { TasksEntity } from '../entities/tasks.entity';
 import { Request } from 'express';
@@ -16,7 +16,7 @@ export class TasksService {
 
     constructor(
         @InjectRepository(TasksEntity) private readonly tasksRepository: Repository<TasksEntity>,
-        private readonly usersService: UsersService
+        @Inject(forwardRef(() => UsersService))private readonly usersService: UsersService
     ) {}
 
 
@@ -90,6 +90,24 @@ export class TasksService {
             const deleteResult: DeleteResult = await this.tasksRepository.delete(
                 task.taskId
             )
+
+            if (deleteResult.affected !== 0) {
+                return deleteResult;
+            }
+
+            throw new BadRequestException();
+
+        } catch(error) {
+            throw new BadRequestException();
+        }
+    }
+
+    public async deleteAllTasksByUser(userId: string): Promise<DeleteResult> {
+        try {
+            const deleteResult: DeleteResult = await this.tasksRepository.createQueryBuilder('task')
+                .delete()
+                .where('task.user.userId = :userId', {userId})
+                .execute();
 
             if (deleteResult.affected !== 0) {
                 return deleteResult;

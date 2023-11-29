@@ -12,7 +12,7 @@ export class UsersController {
     ) {}
 
     @Post()
-    public async getTasks(@Body() body: UsersDTO) {
+    public async registerUser(@Body() body: UsersDTO) {
         return await this.usersServices.registerUser(body);
     }
 

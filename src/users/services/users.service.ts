@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { UsersDTO } from '../dto/users.dto';
 import { UsersEntity } from '../entities/users.entity';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
@@ -8,12 +8,15 @@ import { UpdateUsersDTO } from '../dto/update-users.dto';
 import { manageTokenFromHeaders } from 'src/utils/manage.token';
 import { Request } from 'express';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
+import { TasksService } from 'src/tasks/services/tasks.service';
+import { TasksEntity } from 'src/tasks/entities/tasks.entity';
 
 @Injectable()
 export class UsersService {
 
     constructor(
-        @InjectRepository(UsersEntity) private readonly usersRepository: Repository<UsersEntity>
+        @InjectRepository(UsersEntity) private readonly usersRepository: Repository<UsersEntity>,
+        //@Inject(forwardRef(() => TasksService)) private readonly tasksService: TasksService
     ) {}
 
     public async registerUser(body: UsersDTO): Promise<UsersEntity> {
@@ -75,15 +78,18 @@ export class UsersService {
 
     public async deleteUserById(userId: string) {
         try {
+            // await this.tasksService.deleteAllTasksByUser(userId);
+
             const deleteResult: DeleteResult = await this.usersRepository.delete(
                 userId
-            )
+            );
 
             if (deleteResult.affected !== 0) {
                 return deleteResult;
             }
 
             throw new BadRequestException();
+
         } catch(error) {
             throw new BadRequestException();
         }
@@ -101,18 +107,14 @@ export class UsersService {
             // sub refers to Subject => userId
             const tokenUserId = managedToken.sub;
             
-            const user: Promise<UsersEntity> = this.getUserById(tokenUserId)
-
-            const {username, email, phoneNumber} = body;
-
-            const updatedUser = {username, email, phoneNumber};
+            const user: Promise<UsersEntity> = this.getUserById(tokenUserId);
 
             const updateResult: UpdateResult = await this.usersRepository.update(
-                (await user).userId, updatedUser
+                (await user).userId, body
             )
 
             if (updateResult.affected !== 0) {
-                return updatedUser;
+                return await this.getUserById(tokenUserId);
             }
 
             throw new BadRequestException();
@@ -124,14 +126,15 @@ export class UsersService {
 
     public async deleteUserByToken(request: Request) {
         try {
-            const managedToken: IUseToken = manageTokenFromHeaders(request);
 
+            const managedToken: IUseToken = manageTokenFromHeaders(request);
+            
             // sub refers to the Subject => userId
             const tokenUserId = managedToken.sub;
+            
+            const user: UsersEntity = await this.getUserById(tokenUserId);
 
-            const user: Promise<UsersEntity> = this.getUserById(tokenUserId)
-
-            return await this.deleteUserById((await user).userId)
+            return await this.deleteUserById(user.userId);
 
         } catch(error) {
             throw new NotFoundException();

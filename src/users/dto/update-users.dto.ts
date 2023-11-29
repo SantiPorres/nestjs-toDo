@@ -16,8 +16,4 @@ export class UpdateUsersDTO {
     @IsString()
     @MaxLength(15)
     phoneNumber: string;
-
-    password: string;
-
-    userId: string;
 }
