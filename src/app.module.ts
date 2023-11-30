@@ -14,7 +14,8 @@ import { AuthModule } from './auth/auth.module';
     }),
     TypeOrmModule.forRoot(DataSourceConfig),
     UsersModule, 
-    TasksModule, AuthModule
+    TasksModule,
+    AuthModule
   ],
 })
 export class AppModule {}

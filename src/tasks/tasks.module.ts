@@ -5,6 +5,7 @@ import { TasksEntity } from './entities/tasks.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/services/users.service';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UsersService } from 'src/users/services/users.service';
     ])
   ],
   providers: [TasksService, UsersService],
-  controllers: [TasksController]
+  controllers: [TasksController],
+  exports: [TasksService]
 })
 export class TasksModule {}

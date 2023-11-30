@@ -2,7 +2,7 @@ import { Exclude } from "class-transformer";
 import { BaseEntity } from "../../config/base.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TasksEntity } from "../../tasks/entities/tasks.entity";
-import { IUser } from "../../interfaces/users.interface";
+import { IUser } from "../../interfaces/users/users.interface";
 
 @Entity({ name: 'users' })
 export class UsersEntity extends BaseEntity implements IUser {

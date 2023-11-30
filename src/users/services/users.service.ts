@@ -10,13 +10,15 @@ import { Request } from 'express';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
 import { TasksService } from 'src/tasks/services/tasks.service';
 import { TasksEntity } from 'src/tasks/entities/tasks.entity';
+import { IUsersService } from 'src/interfaces/users/users-service.interface';
+import { ITasksService } from 'src/interfaces/tasks/tasks-service.interface';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements IUsersService{
 
     constructor(
         @InjectRepository(UsersEntity) private readonly usersRepository: Repository<UsersEntity>,
-        //@Inject(forwardRef(() => TasksService)) private readonly tasksService: TasksService
+        @Inject(forwardRef(() => TasksService)) private readonly tasksService: ITasksService
     ) {}
 
     public async registerUser(body: UsersDTO): Promise<UsersEntity> {
@@ -76,9 +78,9 @@ export class UsersService {
         }
     }
 
-    public async deleteUserById(userId: string) {
+    public async deleteUserById(userId: string): Promise<DeleteResult> {
         try {
-            // await this.tasksService.deleteAllTasksByUser(userId);
+            await this.tasksService.deleteAllTasksByUserId(userId);
 
             const deleteResult: DeleteResult = await this.usersRepository.delete(
                 userId
@@ -99,7 +101,7 @@ export class UsersService {
 
     // Methods by Token
 
-    public async updateUserByToken(request: Request, body: UpdateUsersDTO) {
+    public async updateUserByToken(request: Request, body: UpdateUsersDTO): Promise<UsersEntity> {
         try {
 
             const managedToken: IUseToken = manageTokenFromHeaders(request);
@@ -124,7 +126,7 @@ export class UsersService {
         }
     }
 
-    public async deleteUserByToken(request: Request) {
+    public async deleteUserByToken(request: Request): Promise<DeleteResult> {
         try {
 
             const managedToken: IUseToken = manageTokenFromHeaders(request);
