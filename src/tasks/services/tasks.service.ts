@@ -45,8 +45,9 @@ export class TasksService implements ITasksService {
 
     public async getTaskById(taskId: string): Promise<TasksEntity> {
         try {
-            const task = await this.tasksRepository.findOneBy({
-                taskId
+            const task = await this.tasksRepository.findOne({
+                where: {taskId: taskId},
+                relations: ['user']
             });
 
             if (!task) {
@@ -177,7 +178,7 @@ export class TasksService implements ITasksService {
             const managedToken: IUseToken = manageTokenFromHeaders(request);
             
             // sub refers to Subject => userId
-            const tokenUserId = managedToken.sub
+            const tokenUserId = managedToken.sub;
 
             const user = await this.usersService.getUserById(tokenUserId);
 
@@ -190,4 +191,30 @@ export class TasksService implements ITasksService {
             throw ErrorManager.createSignatureError(error.message);
         }
     }
+
+    public async validateTaskOwnership(request: Request, taskId: string): Promise<boolean> {
+        try {
+
+            const managedToken: IUseToken = manageTokenFromHeaders(request);
+
+            // sub refers to Subject => userId
+            const tokenUserId = managedToken.sub;
+
+            await this.usersService.getUserById(tokenUserId);
+
+            const task = await this.getTaskById(taskId);
+
+            if (task.user.userId !== tokenUserId) {
+                throw new ErrorManager({
+                    type: 'BAD_REQUEST',
+                    message: 'The user is not the owner of the task'
+                });
+            }
+
+            return true;
+
+        } catch(error) {
+            throw ErrorManager.createSignatureError(error.message);
+        }
+    } 
 }

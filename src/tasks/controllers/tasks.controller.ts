@@ -21,18 +21,33 @@ export class TasksController {
     }
 
     @Get()
-    public async getTasksByUserToken(@Req() request: Request) {
+    public async getTasksByUserToken(
+        @Req() request: Request
+    ) {
         return await this.tasksServices.getAllTasksByUserToken(request)
     }
 
     @Patch(':taskId')
-    public async updateTaskStatus(@Param('taskId') taskId: string, @Body() body: updateTaskStatusDTO ) {
-        return await this.tasksServices.updateTaskStatusById(taskId, body)
+    public async updateTaskStatus(
+        @Req() request: Request,
+        @Param('taskId') taskId: string, 
+        @Body() body: updateTaskStatusDTO 
+    ) {
+        // validateTaskOwnership => techincal debt
+        if (await this.tasksServices.validateTaskOwnership(request, taskId)) {
+            return await this.tasksServices.updateTaskStatusById(taskId, body)
+        }
     }
 
     @Delete(':taskId')
-    public async deleteTask(@Param('taskId') taskId: string) {
-        return await this.tasksServices.deleteTaskById(taskId);
+    public async deleteTask(
+        @Req() request: Request,
+        @Param('taskId') taskId: string
+    ) {
+        // validateTaskOwnership => techincal debt
+        if (await this.tasksServices.validateTaskOwnership(request, taskId)) {
+            return await this.tasksServices.deleteTaskById(taskId);
+        }
     }
 
 }

@@ -37,6 +37,7 @@ export class UsersController {
 
     @Delete(':userId')
     @UseGuards(AuthGuard)
+    // technical debt
     public async deleteUserById(@Param('userId') userId: string) {
         return await this.usersServices.deleteUserById(userId);
     }
