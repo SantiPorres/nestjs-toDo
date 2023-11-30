@@ -1,17 +1,17 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { UsersDTO } from '../dto/users.dto';
 import { UsersEntity } from '../entities/users.entity';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsersDTO } from '../dto/update-users.dto';
-import { manageTokenFromHeaders } from 'src/utils/manage.token';
+import { manageTokenFromHeaders } from 'src/utils/token.manager';
 import { Request } from 'express';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
 import { TasksService } from 'src/tasks/services/tasks.service';
-import { TasksEntity } from 'src/tasks/entities/tasks.entity';
 import { IUsersService } from 'src/interfaces/users/users-service.interface';
 import { ITasksService } from 'src/interfaces/tasks/tasks-service.interface';
+import { ErrorManager } from 'src/utils/error.manager';
 
 @Injectable()
 export class UsersService implements IUsersService{
@@ -29,15 +29,11 @@ export class UsersService implements IUsersService{
             );
             return await this.usersRepository.save(body)
         } catch(error) {
-            throw new BadRequestException()
+            throw ErrorManager.createSignatureError(error.message);
         }
     }
 
-
-
-    public async getUserBy({
-        key, value
-    }: {
+    public async AuthGetUserBy({key, value}: {
         key: keyof UsersDTO;
         value: any;
     }): Promise<UsersEntity> {
@@ -51,7 +47,7 @@ export class UsersService implements IUsersService{
             return user;
 
         } catch(error) {
-            throw new BadRequestException();
+            throw ErrorManager.createSignatureError(error.message);
         }
     }
 
@@ -68,32 +64,40 @@ export class UsersService implements IUsersService{
                 .getOne();
             
             if (!user) {
-                throw new BadRequestException();
+                throw new ErrorManager({
+                    type: 'NOT_FOUND',
+                    message: 'The user was not found'
+                });
             }
 
             return user;
 
         } catch(error) {
-            throw new NotFoundException();
+            throw ErrorManager.createSignatureError(error.message);
         }
     }
 
     public async deleteUserById(userId: string): Promise<DeleteResult> {
         try {
+            await this.getUserById(userId);
+
             await this.tasksService.deleteAllTasksByUserId(userId);
 
             const deleteResult: DeleteResult = await this.usersRepository.delete(
                 userId
             );
 
-            if (deleteResult.affected !== 0) {
-                return deleteResult;
+            if (deleteResult.affected === 0) {
+                throw new ErrorManager({
+                    type: 'BAD_REQUEST',
+                    message: 'The user could not be deleted'
+                });
             }
-
-            throw new BadRequestException();
+            
+            return deleteResult;
 
         } catch(error) {
-            throw new BadRequestException();
+            throw ErrorManager.createSignatureError(error.message);
         }
     }
 
@@ -109,20 +113,23 @@ export class UsersService implements IUsersService{
             // sub refers to Subject => userId
             const tokenUserId = managedToken.sub;
             
-            const user: Promise<UsersEntity> = this.getUserById(tokenUserId);
+            await this.getUserById(tokenUserId);
 
             const updateResult: UpdateResult = await this.usersRepository.update(
-                (await user).userId, body
+                tokenUserId, body
             )
 
-            if (updateResult.affected !== 0) {
-                return await this.getUserById(tokenUserId);
+            if (updateResult.affected === 0) {
+                throw new ErrorManager({
+                    type: 'NOT_MODIFIED',
+                    message: 'The user could not be updated'
+                });
             }
 
-            throw new BadRequestException();
+            return await this.getUserById(tokenUserId);
             
         } catch(error) {
-            throw new BadRequestException();
+            throw ErrorManager.createSignatureError(error.message);
         }
     }
 
@@ -134,12 +141,12 @@ export class UsersService implements IUsersService{
             // sub refers to the Subject => userId
             const tokenUserId = managedToken.sub;
             
-            const user: UsersEntity = await this.getUserById(tokenUserId);
+            await this.getUserById(tokenUserId);
 
-            return await this.deleteUserById(user.userId);
+            return await this.deleteUserById(tokenUserId);
 
         } catch(error) {
-            throw new NotFoundException();
+            throw ErrorManager.createSignatureError(error.message);
         }
     }
 }

@@ -13,7 +13,7 @@ export interface ITasksService {
 
     deleteTaskById(taskId: string): Promise<DeleteResult>;
 
-    deleteAllTasksByUserId(userId: string): Promise<DeleteResult>;
+    deleteAllTasksByUserId(userId: string): Promise<DeleteResult | void>;
 
     getAllTasksByUserToken(request: Request) : Promise<TasksEntity[]>;
 

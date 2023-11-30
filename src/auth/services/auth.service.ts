@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { UsersEntity } from 'src/users/entities/users.entity';
 import { IAuthResponse, IPayloadToken } from '../interfaces/auth.interface';
+import { ErrorManager } from 'src/utils/error.manager';
 
 @Injectable()
 export class AuthService {
@@ -13,12 +14,12 @@ export class AuthService {
     ) { }
 
     public async validateUser(username: string | number, password: string) {
-        const userByUsername = await this.usersService.getUserBy({
+        const userByUsername = await this.usersService.AuthGetUserBy({
             key: 'username',
             value: username
         });
 
-        const userByEmail = await this.usersService.getUserBy({
+        const userByEmail = await this.usersService.AuthGetUserBy({
             key: 'email',
             value: username
         });
@@ -33,7 +34,10 @@ export class AuthService {
             if (match) return userByEmail;
         }
 
-        return null;
+        throw new ErrorManager({
+            type: 'BAD_REQUEST',
+            message: 'The credentials are incorrect'
+        });
     }
 
     public signJWT({
