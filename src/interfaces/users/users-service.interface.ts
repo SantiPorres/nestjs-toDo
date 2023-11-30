@@ -7,7 +7,7 @@ import { DeleteResult } from "typeorm";
 export interface IUsersService {
     registerUser(body: UsersDTO): Promise<UsersEntity>;
 
-    getUserBy({key, value}: {
+    AuthGetUserBy({key, value}: {
         key: keyof UsersDTO;
         value: any;
     }): Promise<UsersEntity>;

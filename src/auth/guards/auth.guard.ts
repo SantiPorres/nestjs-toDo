@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { UsersService } from 'src/users/services/users.service';
 import { useToken } from 'src/utils/use.token';
 import { IUseToken } from '../interfaces/auth.interface';
-import { manageTokenFromHeaders } from 'src/utils/manage.token';
+import { manageTokenFromHeaders } from 'src/utils/token.manager';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
