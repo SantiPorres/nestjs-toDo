@@ -10,13 +10,15 @@ import { TASKS_STATUS } from 'src/constants/TASKS_STATUS';
 import { updateTaskStatusDTO } from '../dto/update-task-status.dto';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
 import { manageTokenFromHeaders } from 'src/utils/manage.token';
+import { ITasksService } from 'src/interfaces/tasks/tasks-service.interface';
+import { IUsersService } from 'src/interfaces/users/users-service.interface';
 
 @Injectable()
-export class TasksService {
+export class TasksService implements ITasksService {
 
     constructor(
         @InjectRepository(TasksEntity) private readonly tasksRepository: Repository<TasksEntity>,
-        @Inject(forwardRef(() => UsersService))private readonly usersService: UsersService
+        @Inject(forwardRef(() => UsersService)) private readonly usersService: IUsersService
     ) {}
 
 
@@ -102,11 +104,11 @@ export class TasksService {
         }
     }
 
-    public async deleteAllTasksByUser(userId: string): Promise<DeleteResult> {
+    public async deleteAllTasksByUserId(userId: string): Promise<DeleteResult> {
         try {
-            const deleteResult: DeleteResult = await this.tasksRepository.createQueryBuilder('task')
+            const deleteResult: DeleteResult = await this.tasksRepository.createQueryBuilder('tasks')
                 .delete()
-                .where('task.user.userId = :userId', {userId})
+                .where('user.userId = :userId', {userId})
                 .execute();
 
             if (deleteResult.affected !== 0) {
