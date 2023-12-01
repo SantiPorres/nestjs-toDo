@@ -9,8 +9,8 @@ import { manageTokenFromHeaders } from 'src/utils/token.manager';
 import { Request } from 'express';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
 import { TasksService } from 'src/tasks/services/tasks.service';
-import { IUsersService } from 'src/interfaces/users/users-service.interface';
-import { ITasksService } from 'src/interfaces/tasks/tasks-service.interface';
+import { IUsersService } from 'src/users/interfaces/users-service.interface';
+import { ITasksService } from 'src/tasks/interfaces/tasks-service.interface';
 import { ErrorManager } from 'src/utils/error.manager';
 
 @Injectable()

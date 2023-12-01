@@ -13,13 +13,13 @@ export class AuthService {
         private readonly usersService: UsersService
     ) { }
 
-    public async validateUser(username: string | number, password: string) {
-        const userByUsername = await this.usersService.AuthGetUserBy({
+    public async validateUser(username: string | number, password: string): Promise<UsersEntity> {
+        const userByUsername: UsersEntity = await this.usersService.AuthGetUserBy({
             key: 'username',
             value: username
         });
 
-        const userByEmail = await this.usersService.AuthGetUserBy({
+        const userByEmail: UsersEntity = await this.usersService.AuthGetUserBy({
             key: 'email',
             value: username
         });
@@ -48,7 +48,7 @@ export class AuthService {
         payload: jwt.JwtPayload;
         secret: string;
         expires: number | string;
-    }) {
+    }): string {
         return jwt.sign(payload, secret, { expiresIn: expires })
     }
 
