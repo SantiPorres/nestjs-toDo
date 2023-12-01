@@ -1,6 +1,8 @@
-import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { AuthDTO } from '../dto/auth.dto';
+import { UsersEntity } from 'src/users/entities/users.entity';
+import { ErrorManager } from 'src/utils/error.manager';
 
 @Controller('auth')
 export class AuthController {
@@ -11,13 +13,16 @@ export class AuthController {
 
     @Post('login')
     async login(@Body() { username, password }: AuthDTO) {
-        const userValidate = await this.authService.validateUser(
+        const userValidate: UsersEntity = await this.authService.validateUser(
             username,
             password
         )
 
         if (!userValidate) {
-            throw new UnauthorizedException('Username or password not valid')
+            throw new ErrorManager({
+                type: 'UNAUTHORIZED',
+                message: 'Invalid credentials'
+            });
         }
 
         const jwt = await this.authService.generateJWT(userValidate);

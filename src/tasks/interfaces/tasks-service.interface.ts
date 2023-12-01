@@ -18,4 +18,6 @@ export interface ITasksService {
     getAllTasksByUserToken(request: Request) : Promise<TasksEntity[]>;
 
     createTaskByUserToken(body: TasksDTO, request: Request): Promise<TasksEntity>;
+
+    validateTaskOwnership(request: Request, taskId: string): Promise<boolean>;
 }

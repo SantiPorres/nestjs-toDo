@@ -13,32 +13,43 @@ export class UsersController {
     ) {}
 
     @Post()
-    public async registerUser(@Body() body: UsersDTO) {
+    public async registerUser(
+        @Body() body: UsersDTO
+    ) {
         return await this.usersServices.registerUser(body);
     }
 
     @Get(':userId')
     @UseGuards(AuthGuard)
-    public async getUserById(@Param('userId') userId: string) {
+    public async getUserById(
+        @Param('userId') userId: string
+    ) {
         return await this.usersServices.getUserById(userId);
     }
 
     @Patch()
     @UseGuards(AuthGuard)
-    public async updateUser(@Req() request: Request, @Body() body: UpdateUsersDTO) {
+    public async updateUser(
+        @Req() request: Request, 
+        @Body() body: UpdateUsersDTO
+    ) {
         return await this.usersServices.updateUserByToken(request, body);
     }
 
     @Delete()
     @UseGuards(AuthGuard)
-    public async deleteUserByToken(@Req() request: Request) {
+    public async deleteUserByToken(
+        @Req() request: Request
+    ) {
         return await this.usersServices.deleteUserByToken(request);
     }
 
     @Delete(':userId')
     @UseGuards(AuthGuard)
     // technical debt
-    public async deleteUserById(@Param('userId') userId: string) {
+    public async deleteUserById(
+        @Param('userId') userId: string
+    ) {
         return await this.usersServices.deleteUserById(userId);
     }
 }

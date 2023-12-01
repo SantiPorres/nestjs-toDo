@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { TasksDTO } from '../dto/tasks.dto';
 import { TasksEntity } from '../entities/tasks.entity';
 import { Request } from 'express';
@@ -10,8 +10,8 @@ import { TASKS_STATUS } from 'src/constants/TASKS_STATUS';
 import { updateTaskStatusDTO } from '../dto/update-task-status.dto';
 import { IUseToken } from 'src/auth/interfaces/auth.interface';
 import { manageTokenFromHeaders } from 'src/utils/token.manager';
-import { ITasksService } from 'src/interfaces/tasks/tasks-service.interface';
-import { IUsersService } from 'src/interfaces/users/users-service.interface';
+import { ITasksService } from 'src/tasks/interfaces/tasks-service.interface';
+import { IUsersService } from 'src/users/interfaces/users-service.interface';
 import { ErrorManager } from 'src/utils/error.manager';
 
 @Injectable()
